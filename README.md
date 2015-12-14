@@ -8,6 +8,13 @@ It's
 - Data manipulation
 
 ## Installation Guide
+1. Install git 
+  - Windows [git]
+1. Clone repository
+
+  ```
+  git clone https://github.com/drakin/neas.git
+  ```
 1. Download and install python 2.7 and add it to PATH [python x64] or [python x86]
 1. Install requiried python libs
   - Windows
@@ -36,7 +43,7 @@ It's
     ```
         python main.py
     ```
-
+[git]: https://git-scm.com/downloads
 [python x64]: https://www.python.org/ftp/python/2.7.11/python-2.7.11.amd64.msi
 [python x86]: https://www.python.org/ftp/python/2.7.11/python-2.7.11.msi
 [pyQt x64]: http://sourceforge.net/projects/pyqt/files/PyQt4/PyQt-4.11.4/PyQt4-4.11.4-gpl-Py2.7-Qt4.8.7-x64.exe
