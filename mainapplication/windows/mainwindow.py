@@ -12,30 +12,34 @@ class MainWindow(QtGui.QMainWindow):
         self.resize(400, 600)
         self.setWindowTitle('Neas')
         self._initMenuBar_()
+        self.mainWidget = QtGui.QWidget()
+        self.tabWidget = QtGui.QTabWidget()
+
+        self.arrayMask = None
+        self.maskIndex = 0
         self.infoFile = None
         self.dataFile = None
-        self.mainWidget = QtGui.QWidget()
-
-        # self.currentLayout = QtGui.QGridLayout()
-        # self.currentLayout.set
 
         self.setCentralWidget(self.mainWidget)
         self.mainWidget.setLayout(QtGui.QGridLayout())
-        self.graphicWidget = gl.GLViewWidget()
-        self.graphicWidget.setCameraPosition(distance=50)
-        self.mainWidget.layout().addWidget(self.graphicWidget, 0, 0, 2, 1)
+
+        self.graphicWidgetGrid = gl.GLViewWidget()
+        self.graphicWidgetGrid.setCameraPosition(distance=50)
+        self.graphicWidgetDisc = gl.GLViewWidget()
+        self.graphicWidgetDisc.setCameraPosition(distance=50)
+
+        self.tabWidget.addTab(self.graphicWidgetGrid, 'Grid')
+        self.tabWidget.addTab(self.graphicWidgetDisc, 'Disc')
+        # self.mainWidget.layout().addWidget(self.graphicWidget1, 0, 0, 2, 1)
+        self.mainWidget.layout().addWidget(self.tabWidget, 0, 0, 2, 1)
+
         self.matrixLabel = QtGui.QLabel('',self)
-        # self.mainWidget.layout().addWidget(self.matrixLabel, 1, 2)
         self.rangeSlider = QRangeSlider(self.mainWidget)
         self.rangeSlider.setFixedHeight(30)
         self.mainWidget.layout().addWidget(self.rangeSlider, 2, 0)
 
-        # test = QtGui.QGridLayout()
-        # test.addWidget()
-
-        tmp=QtGui.QGridLayout()
+        tmp = QtGui.QGridLayout()
         tmp.setAlignment(QtCore.Qt.AlignTop)
-        # tmp.
 
         tmp.addWidget(QtGui.QLabel('path to info file',self),0,0)
         tmp.addWidget(QtGui.QPushButton("Change"),0,1)
@@ -54,16 +58,26 @@ class MainWindow(QtGui.QMainWindow):
             tmp2[i].setFixedHeight(100)
             tmp.addWidget(tmp2[i],4,i)
 
-        self.mainWidget.layout().addLayout(tmp,0,1)
-        # self.mainWidget.layout().addWidget(QtGui.QLabel('test1',self), 1, 2)
-        # self.mainWidget.layout().addWidget(QtGui.QLabel('test2',self), 1, 2)
+        self.combobox = QtGui.QComboBox(self)
+        self.combobox.addItem("Without anti aliasing")
+        self.combobox.addItem("With anti aliasing")
+        self.combobox.activated[int].connect(self.onComboActivated)
+        tmp.addWidget(self.combobox, 5, 0, 1, 3)
+        self.arrayMaskLabel = QtGui.QLabel("")
+        self.arrayMaskLabel.adjustSize()
+        self.arrayMaskLabel.setAlignment(QtCore.Qt.AlignTop)
+        np.set_printoptions(precision=2)
+        tmp.addWidget(self.arrayMaskLabel, 6, 0, 1, 3)
+        self.onComboActivated(0)
+        self.mainWidget.layout().addLayout(tmp, 0, 1)
 
         self.startPos = 0
         self.endPos = 100
-        self.connect(self.rangeSlider,QtCore.SIGNAL('startValueChanged(int)'), self.setStart)
-        self.connect(self.rangeSlider,QtCore.SIGNAL('endValueChanged(int)'), self.setEnd)
+        self.connect(self.rangeSlider, QtCore.SIGNAL('startValueChanged(int)'), self.setStart)
+        self.connect(self.rangeSlider, QtCore.SIGNAL('endValueChanged(int)'), self.setEnd)
 
-        self.graph3D = None
+        self.graph3DGrid = None
+        self.graph3DDisc = None
 
     def _initActions_(self):
         self.exitAction = QtGui.QAction(QtGui.QIcon('exit.png'),'&Exit',self)
@@ -123,44 +137,71 @@ class MainWindow(QtGui.QMainWindow):
         self.rangeSlider.setMin(0)
         self.rangeSlider.setMax(self.infoFile['nt'])
         self.rangeSlider.update()
+        self.arrayMask = utils.arrayDisc((self.infoFile['nx'], self.infoFile['ny']),
+                                         (self.infoFile['nx']/2-1, self.infoFile['ny']/2-1),
+                                         self.infoFile['nx']/2-1,
+                                         self.maskIndex
+                                         )
 
-        # self.connect(self.rangeSlider,QtCore.SIGNAL('startValueChanged(int)'), self.changeStart)
 
-    def plotData(self, startTime=0, endTime=511):
+    def onComboActivated(self, index):
+        tmp = utils.arrayDisc((6, 6), (2, 2), 2, index)
+        self.arrayMaskLabel.setText(' ' + str(tmp).translate(None, '[]'))
+        self.arrayMaskLabel.adjustSize()
+        self.maskIndex = index
+        if not self.infoFile is None:
+            self.arrayMask = utils.arrayDisc((self.infoFile['nx'], self.infoFile['ny']),
+                                         (self.infoFile['nx']/2-1, self.infoFile['ny']/2-1),
+                                         self.infoFile['nx']/2-1,
+                                         self.maskIndex
+                                         )
+            self.plotData()
+
+    def plotData(self):
         if self.dataFile is None:
             return
-        sliceSum = np.sum(self.dataFile[startTime:endTime], 0)
+        sliceSum = np.sum(self.dataFile[self.startPos:self.endPos], 0)
         curMax = np.max(sliceSum)
-        print sliceSum
-        print np.max(sliceSum)
-        if self.graph3D is None:
+        if self.graph3DGrid is None:
             # x = np.linspace(0,self.infoFile['nx'],self.infoFile['nx'])
             # y = np.linspace(0,self.infoFile['ny'],self.infoFile['ny'])
             # self.graph3D  = gl.GLSurfacePlotItem(z=sliceSum, shader='shaded', computeNormals=False, smooth=False, glOptions='opaque')
-            self.graph3D  = gl.GLSurfacePlotItem(z=sliceSum, shader='heightColor', computeNormals=False, smooth=False)
+            self.graph3DGrid = gl.GLSurfacePlotItem(z=sliceSum, shader='heightColor', computeNormals=False, smooth=False)
 
             # self.graph3D.scale(16./49., 16./49., 1.0)
             # self.graph3D.translate(self.infoFile['nx']/2, self.infoFile['ny']/2, 3)
             #self.graph3D.rotate(-90, 0, 0, 0)
-            # self.graph3D .translate(-18, 2, 0)
-            self.graph3D.translate(-1000,-700,-700)
+            self.graph3DGrid.translate(-18, 2, 0)
+            # self.graph3D.translate(-1000,-700,-700)
             # self.graph3D.shader()['colorMap'] = [1, 1, 1, 1, 0.5, 1, 1, 0, 1]
             # self.graph3D.shader()['colorMap'] = np.array([0.2, 2, 0.5, 0.2, 1, 1, 0.2, 0, 2])
-            self.graphicWidget.addItem(self.graph3D)
+            self.graphicWidgetGrid.addItem(self.graph3DGrid)
+            self.setGraph3DColor([0.01, 0.2, 0.5, 0.01, 0.1, 1, 0.01, 0, 2])
         else:
-            self.graph3D.setData(z=sliceSum)
+            self.graph3DGrid.setData(z=sliceSum)
+
+        if self.graph3DDisc is None:
+            self.graph3DDisc = gl.GLSurfacePlotItem(z=sliceSum*self.arrayMask, shader='heightColor', computeNormals=False, smooth=False)
+            self.graph3DDisc.translate(-18, 2, 0)
+            self.graphicWidgetDisc.addItem(self.graph3DDisc)
+        else:
+            self.graph3DDisc.setData(z=sliceSum*self.arrayMask)
+
         # self.graph3D.shader()['colorMap'] = np.array([0.001, 2, 0.5, 0.001, 0.7, 0.5, 0, 0, 1])
-        self.graph3D.shader()['colorMap'] = np.array([0.01, 0.2, 0.5, 0.01, 0.1, 1, 0.01, 0, 2])
-        print "Plotted"
+
+        # print "Plotted"
+
+    def setGraph3DColor(self, color):
+        self.graph3DGrid.shader()['colorMap'] = np.array(color)
 
     def setStart(self, pos):
         if pos != self.startPos:
             print 'setStart',pos
             self.startPos = pos
-            self.plotData(self.startPos, self.endPos)
+            self.plotData()
 
     def setEnd(self, pos):
         if pos != self.endPos:
             print 'setEnd',pos
             self.endPos = pos
-            self.plotData(self.startPos, self.endPos)
+            self.plotData()

@@ -1,3 +1,5 @@
+import draw
+import numpy as np
 def num(s):
     try:
         return int(s)
@@ -17,3 +19,21 @@ def delimited(inputFile, delimiter='\n', bufsize=4096):
             for line in lines[:-1]:
                 yield line
             buf = lines[-1]
+
+
+def arrayDisc(size, center, radius, alghoritmIndex=0):
+    array = np.zeros(size)
+    if alghoritmIndex == 0:
+        x, y = draw.circle_perimeter(center[1], center[0], radius, shape=size)
+        array[x, y] = 1
+        x, y = draw.circle(center[1], center[0], radius, shape=size)
+        array[x, y] = 1
+        return array
+
+    if alghoritmIndex == 1:
+        x, y, val = draw.circle_perimeter_aa(center[1], center[0], radius, shape=size)
+        array[x, y] = val
+        x, y = draw.circle(center[1], center[0], radius, shape=size)
+        array[x, y] = 1
+        return array
+    return None
