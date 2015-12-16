@@ -137,7 +137,8 @@ class MainWindow(QtGui.QMainWindow):
             return
         dataFile = open(fileName, 'rb')
         result = np.fromfile(dataFile, dtype=np.uint32)
-        return result.reshape((self.infoFile['nt'], self.infoFile['nx'], self.infoFile['ny']))
+        # return result.reshape((self.infoFile['nt'], self.infoFile['nx'], self.infoFile['ny']))
+        return result.reshape((self.infoFile['nx'], self.infoFile['ny'], self.infoFile['nt']))
 
     def loadDataFileAction(self):
         self.dataFile = self.loadDataFile()
@@ -189,7 +190,8 @@ class MainWindow(QtGui.QMainWindow):
     def plotData(self):
         if self.dataFile is None:
             return
-        sliceSum = np.sum(self.dataFile[self.startPos:self.endPos], 0)
+        # sliceSum = np.sum(self.dataFile[:][:][self.startPos:self.endPos], 0)
+        sliceSum = np.sum(self.dataFile[:,:,self.startPos:self.endPos], 2)
         self.curMax = np.max(sliceSum)
         if self.graph3DGrid is None:
             # x = np.linspace(0,self.infoFile['nx'],self.infoFile['nx'])
