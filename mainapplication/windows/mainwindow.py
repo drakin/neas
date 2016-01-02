@@ -92,11 +92,11 @@ class MainWindow(QtGui.QMainWindow):
         self.combobox.addItem("With anti aliasing")
         self.combobox.activated[int].connect(self.onComboActivated)
         tmp.addWidget(self.combobox, 6, 0, 1, 3)
-        self.arrayMaskLabel = QtGui.QLabel("")
-        self.arrayMaskLabel.adjustSize()
-        self.arrayMaskLabel.setAlignment(QtCore.Qt.AlignTop)
+        # self.arrayMaskLabel = QtGui.QLabel("")
+        # self.arrayMaskLabel.adjustSize()
+        # self.arrayMaskLabel.setAlignment(QtCore.Qt.AlignTop)
         np.set_printoptions(precision=2)
-        tmp.addWidget(self.arrayMaskLabel, 7, 0, 1, 3)
+        # tmp.addWidget(self.arrayMaskLabel, 7, 0, 1, 3)
         self.onComboActivated(0)
         self.mainWidget.layout().addLayout(tmp, 0, 1)
 
@@ -167,24 +167,31 @@ class MainWindow(QtGui.QMainWindow):
         self.rangeSlider.setMin(0)
         self.rangeSlider.setMax(self.infoFile['nt'])
         self.rangeSlider.update()
-        self.arrayMask = utils.arrayDisc((self.infoFile['nx'], self.infoFile['ny']),
+        self.arrayMask = utils.arrayRing((self.infoFile['nx'], self.infoFile['ny']),
                                          (self.infoFile['nx']/2-1, self.infoFile['ny']/2-1),
-                                         self.infoFile['nx']/2-1,
+                                         (50, self.infoFile['nx'] / 2 - 1),
                                          self.maskIndex
                                          )
 
 
     def onComboActivated(self, index):
-        tmp = utils.arrayDisc((6, 6), (2, 2), 2, index)
-        self.arrayMaskLabel.setText(' ' + str(tmp).translate(None, '[]'))
-        self.arrayMaskLabel.adjustSize()
+        # tmp = utils.arrayRing((6, 6), (2, 2), (1,2), index)
+        # self.arrayMaskLabel.setText(' ' + str(tmp).translate(None, '[]'))
+        # self.arrayMaskLabel.adjustSize()
         self.maskIndex = index
         if not self.infoFile is None:
-            self.arrayMask = utils.arrayDisc((self.infoFile['nx'], self.infoFile['ny']),
-                                         (self.infoFile['nx']/2-1, self.infoFile['ny']/2-1),
-                                         self.infoFile['nx']/2-1,
-                                         self.maskIndex
-                                         )
+            # self.arrayMask = utils.arrayRing((self.infoFile['nx'], self.infoFile['ny']),
+            #                              (self.infoFile['nx']/2-1, self.infoFile['ny']/2-1),
+            #                              (50, self.infoFile['nx'] / 2 - 1),
+            #                              self.maskIndex
+            #                              )
+            # Uncomment code above and comment code below, for non-preview mode
+            self.arrayMask = utils.arrayRing((self.infoFile['nx'], self.infoFile['ny']),
+                             (self.infoFile['nx']/2-1, self.infoFile['ny']/2-1),
+                             (self.infoFile['nx'] / 2 - 1, self.infoFile['nx'] / 2 + 50),
+                             self.maskIndex
+                             )
+
             self.plotData()
 
     def plotData(self):
